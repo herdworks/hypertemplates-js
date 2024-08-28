@@ -1,0 +1,23 @@
+---
+# GitHub Projects Automation
+#
+# References:
+# - https://docs.github.com/en/actions/reference
+# - https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions (spec)
+# - https://docs.github.com/en/actions/learn-github-actions/contexts
+name: GitHub Projects Automation
+run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+on:
+  issues:
+    types:
+      - opened
+jobs:
+  add-to-project:
+    name: Add issue to project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/add-to-project@RELEASE_VERSION
+        with:
+          project-url: https://github.com/orgs/${{github.repository_owner}}/projects/1
+          github-token: ${{ secrets.ORG_PROJECTS_ACCESS_TOKEN }}
+          column-name: Inbox
