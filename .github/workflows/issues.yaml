@@ -16,7 +16,7 @@ jobs:
     name: Add issue to project
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/add-to-project@1.0.2
+      - uses: actions/add-to-project@v1.0.2
         with:
           project-url: https://github.com/orgs/${{github.repository_owner}}/projects/1
           github-token: ${{ secrets.ORG_PROJECTS_ACCESS_TOKEN }}
