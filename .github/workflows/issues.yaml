@@ -6,7 +6,7 @@
 # - https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions (spec)
 # - https://docs.github.com/en/actions/learn-github-actions/contexts
 name: GitHub Projects Automation
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+run-name: Add issue to GitHub Project(s)
 on:
   issues:
     types:
