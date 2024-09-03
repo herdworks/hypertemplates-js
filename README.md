@@ -157,7 +157,6 @@ public/
 site.yaml
 ```
 
-|----------------|------------------------------------|--------------------------|
 | Content        | File(s)                            | Comments                 |
 |----------------|------------------------------------|--------------------------|
 | Site metadata  | `/site.yaml`                       |                          |
@@ -183,7 +182,6 @@ site.yaml
 |                | `/content/:slug/index.toml`        | Page content             |
 |                | `/content/:slug/*` (regular files) | Page assets              |
 |                |                                    |                          |
-|----------------|------------------------------------|--------------------------|
 
 > _NOTE: files are listed in order of precedence._
 
@@ -201,7 +199,6 @@ The HyperTemplates processing pipeline processes templates in five discrete stag
 
 🚧 HyperTemplates are a work in progress! 🚧
 
-|-----------------------|------------------------------------------------|------------|
 | **Stage**             | **Function**                                   | **Status** |
 |-----------------------|------------------------------------------------|------------|
 | **Include**           | Preprocess HTML imports (Server-side includes) |            |
@@ -218,7 +215,6 @@ The HyperTemplates processing pipeline processes templates in five discrete stag
 |                       | S3 publisher                                   |            |
 |                       | Cloudflare publisher                           |            |
 |                       |                                                |            |
-|-----------------------|------------------------------------------------|------------|
 
 ## Use Cases
 
