@@ -2,48 +2,48 @@
 
 HyperTemplates are a pure-HTML templating engine.
 
+HyperTemplates can be used on individual pages or as a static site generator for an entire website.
+
 ```html
 <!DOCTYPE html>
-<html>
+<html lang='en-US'>
     <head>
         <!-- Browser Metadata -->
-        <meta charset='utf-8' />
-        <meta name='viewport' content='width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes' />
+        <meta charset='utf-8'>
+        <meta name='viewport' content='width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes'>
 
         <!-- Page Metadata -->
-        <title data-ht-content='title'>HyperTemplates</title>
-        <meta name='description' content='A pure-HTML templating engine for the modern web.' data-ht-attr-content='page.description,site.description' />
-        <link rel='canonical' href='https://hypertemplates.com' data-ht-attr-href='canonical' />
-        <link rel='icon' type='image/jpeg' sizes="32x32" href='/favicon.ico' data-ht-attr-href='favicon' />
+        <title data-hyper-content='site.title'>HyperTemplates</title>
+        <meta name='description' content='A pure-HTML templating engine for the modern web.' data-hyper-attrs='content:page.description,site.description'>
+        <link rel='canonical' href='https://hypertemplates.net' data-hyper-attrs='href:page.canonical_url'>
+        <link rel='icon' type='image/jpeg' sizes="32x32" href='/favicon.ico' data-hyper-attrs='href:site.favicon'>
 
         <!-- CSS -->
-        <link rel='stylesheet' href='/theme/css/index.css' data-ht-attr-href='stylesheet' />
+        <link rel='stylesheet' href='/styles.css' data-hyper-attrs='href:site.stylesheet'>
 
         <!-- JS -->
-        <script defer="" src="/index.js" type="module" data-ht-attr-src='javascript'></script>
-
-        <!-- Data -->
-        <meta data />
-        <meta itemprop='foo' content='bar'>
+        <script src="/index.js" type="module" data-hyper-attrs='src:site.javascript'></script>
+        <script src='/hypertemplates.js' type='module'></script>
     </head>
     <body>
         <section id='nav'>
             <!-- site navigation -->
         </section>
         <section id='hero'>
-            <h1 data-ht-content='title'>HyperTemplates</h1>
-            <p data-ht-content='description'>HyperTemplates are a pure-HTML templating engine.</p>
+            <h1 data-hyper-content='page.title'>HyperTemplates</h1>
+            <p data-hyper-content='page.summary'>HyperTemplates are a pure-HTML templating engine.</p>
         </section>
-        <section id='content' data-ht-content='article'>
+        <section id='content' data-hyper-content='page.content'>
             <!-- page content -->
         </section>
         <section id='footer'>
-            <div class='' data-ht-content-for='featured-tags'>
-                <a href='/tags/example' data-ht-attr-href='url'>
-                    <span data-ht-content='name'>Example</span>
+            <div class='' data-hyper-foreach='tag:page.tags'>
+                <a href='/tags/example' data-hyper-attrs='href:tag.url'>
+                    <span data-hyper-content='tag.name'>Example</span>
                 </a>
             </div>
         </section>
+        <hyper-templates hidden data-href='index.json'></hyper-templates>
     </body>
 </html>
 ```
@@ -52,19 +52,19 @@ HyperTemplates are a pure-HTML templating engine.
 
 HyperTemplates uses [HTML5 data attributes] as template instructions.
 
-* `data-ht-attr-<attribute>=<[scope.key]>`
+* `data-hyper-attrs` or `dataset.hyperAttrs`
 
-  Creates a slot for an HTML element attribute, overwriting the current attribute value (if present).
+  Creates a slot for one or more HTML element attributes, overwriting the current attribute values (if present).
 
-* `data-ht-content=<[scope.key]>`
+* `data-hyper-content` or `dataset.hyperContent`
 
   Creates a slot for an HTML element's content (i.e. `innerHTML`), overwriting the current contents (if present).
 
-* `data-ht-content-if=<[scope.key]>`
+* `data-hyper-if` or `dataset.hyperIf`
 
   Creates a slot for a conditional HTML element, removing the element if the key is not present.
 
-* `data-ht-content-for=<[scope.key]>`
+* `data-hyper-foreach` or `dataset.hyperForeach`
 
   Creates a slot for a collection of HTML elements, repeating all nested HTML elements once per item in the collection.
 
