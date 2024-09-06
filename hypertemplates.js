@@ -37,7 +37,7 @@ class HyperTemplates extends HTMLElement {
 
     // evaluate template conditionals
     evaluate(template=document) {
-        let conditionals = Array.from(template.querySelectorAll(this.templateSelector("data-hyper-if")));
+        let conditionals = this.selectElements(template, "[data-hyper-if]");
         for (let [_, element] of Object.entries(conditionals)) {
             this.evaluateElement(element);
         };
@@ -53,15 +53,15 @@ class HyperTemplates extends HTMLElement {
 
     // render the template
     async render(template=document) {
-        let attributes = Array.from(template.querySelectorAll(this.templateSelector("data-hyper-attrs")));
+        let attributes = this.selectElements(template, "[data-hyper-attrs]");
         for (let [_, element] of Object.entries(attributes)) {
             this.renderAttributes(element);
         };
-        let contents = Array.from(template.querySelectorAll(this.templateSelector("data-hyper-content")));
+        let contents = this.selectElements(template, "[data-hyper-content]");
         for (let [_, element] of Object.entries(contents)) {
             this.renderContent(element);
         };
-        let templates = Array.from(template.querySelectorAll(this.templateSelector("data-hyper-template")));
+        let templates = this.selectElements(template, "[data-hyper-template]");
         for (let [_, element] of Object.entries(templates)) {
             await this.renderTemplate(element);
         };
@@ -108,12 +108,6 @@ class HyperTemplates extends HTMLElement {
         };
         template.setAttribute("hidden", ""); // hide placeholder template content
     };
-    templateSelector(selector) {
-        let wrapperFunctions = ["data-hyper-template"];
-        let query = `[${selector}]`;
-        for (let f of wrapperFunctions) { query = query.concat(`:not([${f}] [${selector}])`) };
-        return query;
-    };
     templateParameters(incoming="") {
         var params = incoming.split(";");
         return params.map(function(param) {
@@ -123,6 +117,10 @@ class HyperTemplates extends HTMLElement {
             values = value.split(",");
             return [key.trim(), values];
         });
+    };
+    selectElements(template=document, selector="[data-hyper-content]") {
+        selector = this.subset(selector, ["[data-hyper-template]"]);
+        return Array.from(template.querySelectorAll(selector));
     };
 
     // generic helper methods
@@ -138,6 +136,11 @@ class HyperTemplates extends HTMLElement {
         let value = path.split(".").reduce(function(obj, key) { return (obj || {})[key] }, this.data) || null;
         if (!!!value) { console.warn(`[WARNING] path '${path}' not found;`, this.data) };
         return value;
+    };
+    subset(selector="[data-hyper-content]", containers=[]) {
+        let selected = selector
+        for (let container of containers) { selected = selected.concat(`:not(${container} ${selector})`) };
+        return selected;
     };
 
 };
