@@ -76,16 +76,9 @@ class HyperTemplates extends HTMLElement {
         let params = this.parseParameters(element.dataset.hyperContent);
         for (let [key, param] of params) {
             let value = this.resolveParameter(param);
-            switch (true) {
-                case !!value && key == "text":
-                    element.innerText = value;
-                    break;
-                case !!value && key == "html":
-                    element.innerHTML = value;
-                    break;
-                default:
-                    console.warn(`[WARNING] unknown content mode '${key}';`, element);
-            };
+            if (!!value && key == "text") { element.innerText = value }
+            else if (!!value && key == "html") { element.innerHTML = value }
+            else { console.warn(`[WARNING] unknown content mode '${key}';`, element) };
         };
     };
     async renderTemplate(template = new HTMLElement()) {
