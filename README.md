@@ -1,6 +1,6 @@
 # HyperTemplates
 
-HyperTemplates are a pure-HTML templating engine.
+HyperTemplates are a pure-HTML templating convention & rendering engine.
 
 HyperTemplates can be used on individual pages or as a static site generator for an entire website.
 
@@ -13,7 +13,7 @@ HyperTemplates can be used on individual pages or as a static site generator for
         <meta name='viewport' content='width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes'>
 
         <!-- Page Metadata -->
-        <title data-hyper-content='site.title'>HyperTemplates</title>
+        <title data-hyper-content='text:site.title'>HyperTemplates</title>
         <meta name='description' content='A pure-HTML templating engine for the modern web.' data-hyper-attrs='content:page.description,site.description'>
         <link rel='canonical' href='https://hypertemplates.net' data-hyper-attrs='href:page.canonical_url'>
         <link rel='icon' type='image/jpeg' sizes="32x32" href='/favicon.ico' data-hyper-attrs='href:site.favicon'>
@@ -30,27 +30,27 @@ HyperTemplates can be used on individual pages or as a static site generator for
             <!-- site navigation -->
         </section>
         <section id='hero'>
-            <h1 data-hyper-content='page.title'>HyperTemplates</h1>
-            <p data-hyper-content='page.summary'>HyperTemplates are a pure-HTML templating engine.</p>
+            <h1 data-hyper-content='text:page.title'>HyperTemplates</h1>
+            <p data-hyper-content='text:page.summary'>HyperTemplates are a pure-HTML templating engine.</p>
         </section>
-        <section id='content' data-hyper-content='page.content'>
+        <section id='content' data-hyper-content='html:page.content'>
             <!-- page content -->
         </section>
         <section id='footer'>
-            <div class='' data-hyper-foreach='tag:page.tags'>
+            <div class='' data-hyper-template='tag:page.tags'>
                 <a href='/tags/example' data-hyper-attrs='href:tag.url'>
-                    <span data-hyper-content='tag.name'>Example</span>
+                    <span data-hyper-content='text:tag.name'>Example</span>
                 </a>
             </div>
         </section>
-        <hyper-templates hidden data-href='index.json'></hyper-templates>
+        <hyper-templates hidden data-hyper-data='index.json'></hyper-templates>
     </body>
 </html>
 ```
 
 ## How it works
 
-HyperTemplates uses [HTML5 data attributes] as template instructions.
+HyperTemplates uses [HTML5 data attributes] as template parameters.
 
 * `data-hyper-attrs` or `dataset.hyperAttrs`
 
@@ -64,55 +64,9 @@ HyperTemplates uses [HTML5 data attributes] as template instructions.
 
   Creates a slot for a conditional HTML element, removing the element if the key is not present.
 
-* `data-hyper-foreach` or `dataset.hyperForeach`
+* `data-hyper-template` or `dataset.hyperTemplate`
 
   Creates a slot for a collection of HTML elements, repeating all nested HTML elements once per item in the collection.
-
-HyperTemplates consumes data from Markdown (frontmatter), JSON/YAML, and HTML (itemprop) files to hydrate data objects with three top-level keys: `site`, `feeds`, and `page`:
-
-```javascript
-{
-    site: {
-        baseURL: "",
-        title: "",
-        description: "",
-        author: {
-            name: "",
-            url: "",
-        },
-        metadata: {},
-    },
-    feeds: {
-        default: {
-            baseURL: "",
-            title: "",
-            description: "",
-            tags: [],
-            metadata: {},
-        },
-        blog: {
-            baseURL: "/blog",
-            title: "Blog",
-            description: "My Blog",
-            tags: [],
-            metadata: {},
-        }
-    },
-    page: {
-        created_at: "2024-09-02T10:00:00-07:00",
-        modified_at: "2024-09-02T10:00:00-07:00",
-        draft: false,
-        feed: false,
-        canonical_url: "",
-        title: "",
-        description: "",
-        summary: "",
-        tags: [],
-        content: "", // HTML
-        metadata: {},
-    },
-}
-```
 
 ## Directory Structure
 

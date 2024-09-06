@@ -1,209 +1,145 @@
-// Utility functions
-function noop() {}
-
 // HyperTemplates component
 //
 // Usage:
 //
-//   import { HyperTemplates } from "../index.js";
-//   class AppExample extends HyperTemplates {};
+//   <hyper-templates data-hyper-data="index.json"></hyper-templates>
 class HyperTemplates extends HTMLElement {
 
-    // attributes
-    document;
+    // attributes =============================================================
     data;
-    attributes;
-    elements;
 
-    // instance constructor
-    constructor(root=document, data=null) {
+    // webcomponent lifecycle methods =========================================
+    constructor() {
         super();
-        this.document = root;
-        this.data = data;
+        this.data = null;
     };
-
-    // HyperTemplates().connectedCallback() method (default implementation)
-    // 
-    // WebComponent event handler triggered when element added to DOM
     async connectedCallback() {
-        this.data = this.data || await this.get(this.dataset.href);
-        this.parseHyperTemplateElements();
-        this.processTemplateAttrs();
-        this.processTemplateConditionals();
-        this.processTemplateContents();
-        await this.processTemplateCollections();
+        await this.resolve();
+    };
+    disconnectedCallback() { 
+        // noop
+    };
+    adoptedCallback() { 
+        // noop
+    };
+    attributeChangedCallback(name, oldValue, newValue) { 
+        // noop
     };
 
-    // HyperTemplates().disconnectedCallback() method (default implementation)
-    // 
-    // WebComponent event handler triggered when element removed from DOM
-    disconnectedCallback() {
-        noop();
-    };
+    // HyperTemplates Core Methods ============================================
+    // resolve template
+    async resolve(template=document, data=null) {
+        this.data = data || this.data || await this.get(this.dataset.hyperData);
+        if (data == {}) { return; }; // nothing to do
+        this.evaluate(template);
+        await this.render(template);
+    }
 
-    // HyperTemplates().adoptedCallback() method (default implementation)
-    // 
-    // WebComponent event handler triggered when element moved to new document (page)
-    adoptedCallback() {
-        noop();
-    };
-
-    // HyperTemplates().attributeChangedCallback() method (default implementation)
-    // 
-    // WebComponent event handler triggered when element attribute changes
-    attributeChangedCallback(name, oldValue, newValue) {
-        noop();
-    };
-
-    // HyperTemplates().mutationObserver() method
-    elementObserver(selector="none", callback=async function(){}) {
-        console.debug("Starting element observer for selector: '%s'", selector);
-        var observer = new MutationObserver(function(mutationsList, observer) {
-            mutationsList.forEach(function(mutation) { Array.from(mutation.addedNodes).filter(function(node){ return node instanceof HTMLElement }).forEach(function(node) {
-                for (let element of Array.from(node.querySelectorAll(selector))) {
-                    callback(element);
-                };
-            })});
-        });
-        observer.observe(document, { childList: true, subtree: true });
-    };
-
-    // ===================================================================== //
-    //                                                                       //
-    //                          HyperTemplates Core                          //
-    //                                                                       //
-    // ===================================================================== //
-
-    // getters
-    get wrapperFunctions() {
-        return ["data-hyper-foreach"];
-    };
-
-    // HyperTemplates().parseHyperTemplateElements() method
-    parseHyperTemplateElements() {
-        this.attributes = Array.from(this.document.querySelectorAll(this.query("data-hyper-attrs")));
-        this.conditionals = Array.from(this.document.querySelectorAll(this.query("data-hyper-if")));
-        this.contents = Array.from(this.document.querySelectorAll(this.query("data-hyper-content")));
-        this.collections = Array.from(this.document.querySelectorAll(this.query("data-hyper-foreach")));
-    };
-
-    // HyperTemplates().processTemplateAttrs() method
-    processTemplateAttrs() {
-        for (let [_, element] of Object.entries(this.attributes)) {
-            this.processTemplateAttr(element);
+    // evaluate template conditionals
+    evaluate(template=document) {
+        let conditionals = Array.from(template.querySelectorAll(this.templateSelector("data-hyper-if")));
+        for (let [_, element] of Object.entries(conditionals)) {
+            this.evaluateElement(element);
         };
     };
-    processTemplateAttr(element = new HTMLElement()) {
-        let attrs = this.parseElementAttrs(element.dataset.hyperAttrs);
-        for (let [key, paths] of attrs) {
-            let values = paths.map(function(path){ return this.lookup(this.data, path) }.bind(this));
-            let value = values.filter(function(i){ return i })[0];
-            if (!!value) { element.setAttribute(key, value) }
-            else { console.debug(`Nothing to do for attribute: ${key}`) };
-        };
-    };
-    parseElementAttrs(incoming="") {
-        var attrs = incoming.split(";");
-        return attrs.map(function(attr) {
-            let key, value;
-            if (attr.includes(":")) { [key,value] = attr.split(":") }
-            else if (attr.includes("=")) { [key,value] = attr.split("=") };
-            value = value.split(",");
-            return [key.trim(), value];
-        });
-    };
-
-    // HyperTemplates().processTemplateContents() method
-    processTemplateContents() {
-        for (let [_, element] of Object.entries(this.contents)) {
-            this.processTemplateContent(element);
-        };
-    };
-    processTemplateContent(element = new HTMLElement()) {
-        let paths = element.dataset.hyperContent.split(",");
-        for (let path of paths) {
-            let value = this.lookup(this.data, path);
-            if (!!value) { element.innerHTML = value }
-            else { console.debug(`Nothing to do for content path: ${path}`) };
-        };
-    };
-
-    // HyperTempaltes().processTemplateConditionals() method
-    processTemplateConditionals() {
-        for (let [_, element] of Object.entries(this.conditionals)) {
-            this.processTemplateConditional(element);
-        };
-    };
-    processTemplateConditional(element = new HTMLElement()) {
-        let paths = element.dataset.hyperIf.split(",");
-        for (let path of paths) {
-            let value = this.lookup(this.data, path);
+    evaluateElement(element = new HTMLElement()) {
+        let params = element.dataset.hyperIf.split(",");
+        for (let param of params) {
+            let value = this.lookup(param);
             if (!!value) { element.removeAttribute("hidden") }
             else { element.setAttribute("hidden", "") };
         };
     };
 
-    // HyperTemplates().processTemplateForeach() method
-    async processTemplateCollections() {
-        for (let [_, element] of Object.entries(this.collections)) {
-            await this.processTemplateCollection(element);
+    // render the template
+    async render(template=document) {
+        let attributes = Array.from(template.querySelectorAll(this.templateSelector("data-hyper-attrs")));
+        for (let [_, element] of Object.entries(attributes)) {
+            this.renderAttributes(element);
+        };
+        let contents = Array.from(template.querySelectorAll(this.templateSelector("data-hyper-content")));
+        for (let [_, element] of Object.entries(contents)) {
+            this.renderContent(element);
+        };
+        let templates = Array.from(template.querySelectorAll(this.templateSelector("data-hyper-template")));
+        for (let [_, element] of Object.entries(templates)) {
+            await this.renderTemplate(element);
         };
     };
-    async processTemplateCollection(element = new HTMLElement()) {
-        let collections = this.parseElementCollection(element.dataset.hyperForeach);
-        for (let [key, paths] of collections) {
-            let values = paths.map(function(path){ return this.lookup(this.data, path) }.bind(this));
+    renderAttributes(element = new HTMLElement()) {
+        let params = this.templateParameters(element.dataset.hyperAttrs);
+        for (let [key, param] of params) {
+            let values = param.map(function(p){ return this.lookup(p) }.bind(this));
             let value = values.filter(function(i){ return i })[0];
-            for (let item of value.toReversed()) {
-                let template = element.cloneNode(true);
-                template.removeAttribute("data-hyper-foreach");
-                element.after(template);
-                let data = {};
-                data[key] = item;
-                let collection = new HyperTemplates(template, data);
-                await collection.connectedCallback();
+            if (!!value) { element.setAttribute(key, value) }
+            else { console.debug(element) };
+        };
+    };
+    renderContent(element = new HTMLElement()) {
+        let params = this.templateParameters(element.dataset.hyperContent);
+        for (let [key, param] of params) {
+            let values = param.map(function(p){ return this.lookup(p) }.bind(this));
+            let value = values.filter(function(i){ return i })[0];
+            switch (true) {
+                case !!value && key == "text":
+                    element.innerText = value;
+                    break;
+                case !!value && key == "html":
+                    element.innerHTML = value;
+                    break;
+                default:
+                    console.warn(`[WARNING] unknown content mode '${key}';`, element);
             };
         };
-        element.setAttribute("hidden", "");
     };
-    parseElementCollection(incoming="") {
-        var collections = incoming.split(";");
-        return collections.map(function(collection) {
-            let key, value;
-            if (collection.includes(":")) { [key,value] = collection.split(":") }
-            else if (collection.includes("=")) { [key,value] = collection.split("=") };
-            value = value.split(",");
-            return [key.trim(), value];
+    async renderTemplate(template = new HTMLElement()) {
+        let params = this.templateParameters(template.dataset.hyperTemplate);
+        for (let [key, param] of params) {
+            // TODO: refactor this to support nested arrays -or- objects (i.e. use Object.entries(params))
+            let values = param.map(function(p){ return this.lookup(p) }.bind(this));
+            let value = values.filter(function(i){ return i })[0];
+            for (let item of (value || []).toReversed()) {
+                let element = template.cloneNode(true);
+                element.removeAttribute("data-hyper-template");
+                let data = { [key]: item };
+                await new HyperTemplates().resolve(element, data); // RECURSION!
+                template.after(element); // attach the rendered element after the template placeholder
+            };
+        };
+        template.setAttribute("hidden", ""); // hide placeholder template content
+    };
+    templateSelector(selector) {
+        let wrapperFunctions = ["data-hyper-template"];
+        let query = `[${selector}]`;
+        for (let f of wrapperFunctions) { query = query.concat(`:not([${f}] [${selector}])`) };
+        return query;
+    };
+    templateParameters(incoming="") {
+        var params = incoming.split(";");
+        return params.map(function(param) {
+            let key, value, values;
+            if (param.includes(":")) { [key,value] = param.split(":") }
+            else if (param.includes("=")) { [key,value] = param.split("=") };
+            values = value.split(",");
+            return [key.trim(), values];
         });
     };
 
-    // HyperTemplates().get() method
-    //
-    // Fetches data from a URL and returns a HyperTemplates data object
+    // generic helper methods
     async get(href="index.json") {
         let url = new URL(href, window.location.href);
         console.debug("Fetching data from URL: '%s'", url.href);
         let response = await fetch(url, { method: "GET", headers: {} });
         if (!response.ok) { return {}; };
-        return await response.json();
+        this.data = await response.json() || {}; // cache data
+        return this.data;
     };
-
-    // HyperTemplates().query() method
-    //
-    // Constructs a querySelectorAll() query and returns the result
-    query(selector) {
-        let query = `[${selector}]`;
-        for (let hf of this.wrapperFunctions) { query = query.concat(`:not([${hf}] [${selector}])`) };
-        return query;
-    };
-
-    // HyperTemplates().lookup() method
-    //
-    // Inspired by: https://stackoverflow.com/a/33397682/23460705
-    lookup(data={}, path="") {
-        return path.split(".").reduce(function(obj, key) { return (obj || {})[key] }, data) || null;
+    lookup(path="") {
+        // Inspired by: https://stackoverflow.com/a/33397682/23460705
+        let value = path.split(".").reduce(function(obj, key) { return (obj || {})[key] }, this.data) || null;
+        if (!!!value) { console.warn(`[WARNING] path '${path}' not found;`, this.data) };
+        return value;
     };
 
 };
 customElements.define("hyper-templates", HyperTemplates);
-
