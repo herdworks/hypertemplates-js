@@ -1,36 +1,34 @@
-// HyperTemplates component
+// HyperTemplates
 //
-// Usage:
-//
-//   <hyper-templates data-hyper-data="index.json"></hyper-templates>
+// By Caleb Hailey (caleb@herd.works) 
+// © 2024 Herd Works Inc (https://herd.works)
 class HyperTemplates extends HTMLElement {
 
-    // attributes =============================================================
+    // attributes
     data;
 
-    // webcomponent lifecycle methods =========================================
+    // webcomponent lifecycle methods
     constructor() {
         super();
         this.data = null;
     };
     async connectedCallback() {
-        await this.resolve();
+        await this.process();
     };
-    disconnectedCallback() { 
+    disconnectedCallback() {
         // noop
     };
-    adoptedCallback() { 
+    adoptedCallback() {
         // noop
     };
-    attributeChangedCallback(name, oldValue, newValue) { 
+    attributeChangedCallback(name, oldValue, newValue) {
         // noop
     };
 
-    // HyperTemplates Core Methods ============================================
-    // resolve template
-    async resolve(template=document, data=null) {
+    // process template
+    async process(template=document, data=null) {
         this.data = data || this.data || await this.get(this.dataset.hyperData);
-        if (Object.entries(this.data).length == 0) { return }; // nothing to do
+        if (Object.entries(this.data).length == 0) { return }; // guard: nothing to do!
         this.evaluate(template);
         await this.render(template);
     };
@@ -67,19 +65,17 @@ class HyperTemplates extends HTMLElement {
         };
     };
     renderAttributes(element = new HTMLElement()) {
-        let params = this.templateParameters(element.dataset.hyperAttrs);
+        let params = this.parseParameters(element.dataset.hyperAttrs);
         for (let [key, param] of params) {
-            let values = param.map(function(p){ return this.lookup(p) }.bind(this));
-            let value = values.filter(function(i){ return i })[0];
+            let value = this.resolveParameter(param);
             if (!!value) { element.setAttribute(key, value) }
             else { console.debug(element) };
         };
     };
     renderContent(element = new HTMLElement()) {
-        let params = this.templateParameters(element.dataset.hyperContent);
+        let params = this.parseParameters(element.dataset.hyperContent);
         for (let [key, param] of params) {
-            let values = param.map(function(p){ return this.lookup(p) }.bind(this));
-            let value = values.filter(function(i){ return i })[0];
+            let value = this.resolveParameter(param);
             switch (true) {
                 case !!value && key == "text":
                     element.innerText = value;
@@ -93,22 +89,20 @@ class HyperTemplates extends HTMLElement {
         };
     };
     async renderTemplate(template = new HTMLElement()) {
-        let params = this.templateParameters(template.dataset.hyperTemplate);
+        let params = this.parseParameters(template.dataset.hyperTemplate);
         for (let [key, param] of params) {
-            // TODO: refactor this to support nested arrays -or- objects (i.e. use Object.entries(params))
-            let values = param.map(function(p){ return this.lookup(p) }.bind(this));
-            let value = values.filter(function(i){ return i })[0];
-            for (let item of (value || []).toReversed()) {
+            let data = this.resolveParameter(param);
+            if (!Array.isArray(data)) { data = [data] }; // normalize nested template data as arrays
+            for (let value of data.toReversed()) { // reverse order because template.after() is effectively LIFO
                 let element = template.cloneNode(true);
                 element.removeAttribute("data-hyper-template");
-                let data = { [key]: item };
-                await new HyperTemplates().resolve(element, data); // RECURSION!
-                template.after(element); // attach the rendered element after the template placeholder
+                await new HyperTemplates().process(element, { [key]: value }); // RECURSION!
+                template.after(element); // insert the rendered element after the template placeholder
             };
         };
         template.setAttribute("hidden", ""); // hide placeholder template content
     };
-    templateParameters(incoming="") {
+    parseParameters(incoming="") {
         var params = incoming.split(";");
         return params.map(function(param) {
             let key, value, values;
@@ -117,6 +111,10 @@ class HyperTemplates extends HTMLElement {
             values = value.split(",");
             return [key.trim(), values];
         });
+    };
+    resolveParameter(incoming=[]) {
+        let values = incoming.map(function(i){ return this.lookup(i) }.bind(this));
+        return values.filter(function(i){ return i })[0]; // return the first non-null value
     };
     selectElements(template=document, selector="[data-hyper-content]") {
         selector = this.subset(selector, ["[data-hyper-template]"]);
@@ -132,7 +130,6 @@ class HyperTemplates extends HTMLElement {
         return this.data;
     };
     lookup(path="") {
-        // Inspired by: https://stackoverflow.com/a/33397682/23460705
         let value = path.split(".").reduce(function(obj, key) { return (obj || {})[key] }, this.data) || null;
         if (!!!value) { console.warn(`[WARNING] path '${path}' not found;`, this.data) };
         return value;

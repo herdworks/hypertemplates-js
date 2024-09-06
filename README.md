@@ -33,11 +33,17 @@ HyperTemplates can be used on individual pages or as a static site generator for
             <h1 data-hyper-content='text:page.title'>HyperTemplates</h1>
             <p data-hyper-content='text:page.summary'>HyperTemplates are a pure-HTML templating engine.</p>
         </section>
-        <section id='content' data-hyper-content='html:page.content'>
+        <section id='content'>
             <!-- page content -->
+            <ul>
+                <li style='display: inline;' data-hyper-template='tag:page.tags'>
+                    <span data-hyper-content='text:tag'></span>
+                </li>
+            </ul>
+            <article data-hyper-content='html:page.content'></article>
         </section>
         <section id='footer'>
-            <div class='' data-hyper-template='tag:page.tags'>
+            <div class='' data-hyper-template='tag:site.tags'>
                 <a href='/tags/example' data-hyper-attrs='href:tag.url'>
                     <span data-hyper-content='text:tag.name'>Example</span>
                 </a>
