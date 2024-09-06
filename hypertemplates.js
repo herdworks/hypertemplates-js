@@ -30,10 +30,10 @@ class HyperTemplates extends HTMLElement {
     // resolve template
     async resolve(template=document, data=null) {
         this.data = data || this.data || await this.get(this.dataset.hyperData);
-        if (data == {}) { return; }; // nothing to do
+        if (Object.entries(this.data).length == 0) { return }; // nothing to do
         this.evaluate(template);
         await this.render(template);
-    }
+    };
 
     // evaluate template conditionals
     evaluate(template=document) {
@@ -128,10 +128,9 @@ class HyperTemplates extends HTMLElement {
     // generic helper methods
     async get(href="index.json") {
         let url = new URL(href, window.location.href);
-        console.debug("Fetching data from URL: '%s'", url.href);
         let response = await fetch(url, { method: "GET", headers: {} });
-        if (!response.ok) { return {}; };
-        this.data = await response.json() || {}; // cache data
+        if (!response.ok) { return {} };
+        this.data = await response.json(); // cache data
         return this.data;
     };
     lookup(path="") {
