@@ -6,34 +6,41 @@ class HyperTemplates extends HTMLElement {
 
     // attributes
     data;
+    uri;
 
     // webcomponent lifecycle methods
-    constructor() {
+    constructor(uri=null) {
         super();
         this.data = null;
+        this.uri = uri || new URL(window.location.href);
     };
-    async connectedCallback() {
-        await this.process();
-    };
-    disconnectedCallback() {
-        // noop
-    };
-    adoptedCallback() {
-        // noop
-    };
-    attributeChangedCallback(name, oldValue, newValue) {
-        // noop
-    };
+    async connectedCallback() { await this.process() };
+    disconnectedCallback() {}; // noop
+    adoptedCallback() {}; // noop
+    attributeChangedCallback(name, oldValue, newValue) {}; // noop
 
-    // process template
+    // getters
+    get parser() { return new DOMParser() };
+
+    // hypertemplates methods
     async process(template=document, data=null) {
         this.data = data || this.data || await this.get(this.dataset.hyperData);
         if (Object.entries(this.data).length == 0) { return }; // guard: nothing to do!
+        await this.import(template);
         this.evaluate(template);
         await this.render(template);
     };
 
-    // evaluate template conditionals
+    async import(template=document) {
+        let imports = this.selectElements(template, "[data-hyper-import]");
+        for (let [_, element] of Object.entries(imports)) {
+            let text = await this.get(element.dataset.hyperImport);
+            let partial = this.parser.parseFromString(text, 'text/html');
+            element.after(...Array.from(partial.body.children));
+            element.remove(); // remove the import placeholder
+        };
+    };
+
     evaluate(template=document) {
         let conditionals = this.selectElements(template, "[data-hyper-if]");
         for (let [_, element] of Object.entries(conditionals)) {
@@ -49,7 +56,6 @@ class HyperTemplates extends HTMLElement {
         };
     };
 
-    // render the template
     async render(template=document) {
         let attributes = this.selectElements(template, "[data-hyper-attrs]");
         for (let [_, element] of Object.entries(attributes)) {
@@ -114,13 +120,17 @@ class HyperTemplates extends HTMLElement {
         return Array.from(template.querySelectorAll(selector));
     };
 
-    // generic helper methods
+    // helper methods
     async get(href="index.json") {
-        let url = new URL(href, window.location.href);
+        let url = new URL(href, this.uri);
+        console.debug(`GET ${url.href}`);
         let response = await fetch(url, { method: "GET", headers: {} });
         if (!response.ok) { return {} };
-        this.data = await response.json(); // cache data
-        return this.data;
+        switch (true) {
+            case response.headers.get("Content-Type").includes("application/json"): this.data = await response.json(); return this.data;
+            case response.headers.get("Content-Type").includes("text/html"): return await response.text();
+            default: return await response.text();
+        };
     };
     lookup(path="") {
         let value = path.split(".").reduce(function(obj, key) { return (obj || {})[key] }, this.data) || null;
