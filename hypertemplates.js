@@ -26,18 +26,21 @@ class HyperTemplates extends HTMLElement {
     async process(template=document, data=null) {
         this.data = data || this.data || await this.get(this.dataset.hyperData);
         if (Object.entries(this.data).length == 0) { return }; // guard: nothing to do!
-        await this.import(template);
+        await this.include(template);
         this.evaluate(template);
         await this.render(template);
     };
 
-    async import(template=document) {
-        let imports = this.selectElements(template, "[data-hyper-import]");
-        for (let [_, element] of Object.entries(imports)) {
-            let text = await this.get(element.dataset.hyperImport);
+    async include(template=document) {
+        let includes = this.selectElements(template, "[data-hyper-include]");
+        for (let [_, element] of Object.entries(includes)) {
+            let text = await this.get(element.dataset.hyperInclude);
             let partial = this.parser.parseFromString(text, 'text/html');
             element.after(...Array.from(partial.body.children));
-            element.remove(); // remove the import placeholder
+            element.remove(); // remove the include placeholder
+        };
+        if (this.selectElements(template, "[data-hyper-include]").length > 0) {
+            await this.include(template); // RECURSION
         };
     };
 
